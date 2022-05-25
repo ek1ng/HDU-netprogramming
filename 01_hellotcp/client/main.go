@@ -8,33 +8,44 @@ import (
 	"os"
 )
 
-//客户端
+//TCP client
 
 func main()  {
-    conn ,err := net.Dial("tcp","127.0.0.1:8888")
+    // connect to this socket
+    conn ,err := net.Dial("tcp","127.0.0.1:8080")
     if err != nil {
+        // handle error
         fmt.Println("connected failed, error message:",err)
         return
     }
+    // close connection
     defer conn.Close()
     inputReader := bufio.NewReader(os.Stdout)
+    // send data to server
     for {
-        input, _ := inputReader.ReadString('\n')    //读取用户输入
+        // Read input from stdin
+        input, _ := inputReader.ReadString('\n')
         inputInfo := strings.Trim(input,"\r\n")
-        if strings.ToUpper(inputInfo) == "q"{
-            return  //如果输入q就退出
-        }
-        _,err = conn.Write([]byte(inputInfo))   //发送数据
+
+        // Write data to connection
+        _,err = conn.Write([]byte(inputInfo))
         if err != nil{
+            fmt.Println("Write data failed, error message",err)
             return 
         }
         buf := [512]byte{}
+
+        // Read data from connection
         n,err := conn.Read(buf[:])
         if err != nil{
-            fmt.Println("get information failed, error message",err)
+            fmt.Println("Read data failed, error message",err)
             return 
         }
-        fmt.Println(string(buf[:n]))
+
+        // check write data with read data
+        if (inputInfo == string(buf[:n])){
+            fmt.Println("Send message successfully")
+        }
     }
 }
 

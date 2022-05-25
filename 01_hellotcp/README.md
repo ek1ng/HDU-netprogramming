@@ -9,67 +9,111 @@
 
 ## 代码实现
 
+读写确认 + go routine多端连接通信
+
+### 客户端代码
+
 ```go
-//tcp client
+package main
+
+import (
+ "bufio"
+ "fmt"
+ "net"
+ "strings"
+ "os"
+)
+
+//TCP client
+
 func main()  {
-    conn ,err := net.Dial("tcp","127.0.0.1:8888")
+    // connect to this socket
+    conn ,err := net.Dial("tcp","127.0.0.1:8080")
     if err != nil {
+        // handle error
         fmt.Println("connected failed, error message:",err)
         return
     }
+    // close connection
     defer conn.Close()
     inputReader := bufio.NewReader(os.Stdout)
+    // send data to server
     for {
-        input, _ := inputReader.ReadString('\n')    //读取用户输入
+        // Read input from stdin
+        input, _ := inputReader.ReadString('\n')
         inputInfo := strings.Trim(input,"\r\n")
-        if strings.ToUpper(inputInfo) == "q"{
-            return  //如果输入q就退出
-        }
-        _,err = conn.Write([]byte(inputInfo))   //发送数据
+
+        // Write data to connection
+        _,err = conn.Write([]byte(inputInfo))
         if err != nil{
+            fmt.Println("Write data failed, error message",err)
             return 
         }
         buf := [512]byte{}
+
+        // Read data from connection
         n,err := conn.Read(buf[:])
         if err != nil{
-            fmt.Println("get information failed, error message",err)
+            fmt.Println("Read data failed, error message",err)
             return 
         }
-        fmt.Println(string(buf[:n]))
+
+        // check write data with read data
+        if (inputInfo == string(buf[:n])){
+            fmt.Println("Send message successfully")
+        }
     }
 }
+```
 
-//TCP server端
-func process(conn net.Conn) {
- defer conn.Close() //关闭连接
+### 服务端代码
+
+```go
+package main
+
+import (
+ "bufio"
+ "fmt"
+ "net"
+)
+
+//TCP server
+
+func handleConnection(conn net.Conn) {
+ defer conn.Close()
  for {
   reader := bufio.NewReader(conn)
   var buf [128]byte
-  n, err := reader.Read(buf[:]) //读取数据
+  n, err := reader.Read(buf[:])
   if err != nil {
    fmt.Println("Failed to connect to client, error message:", err)
   }
   recvStr := string(buf[:n])
-  fmt.Println("Receive client information:", recvStr)
+  fmt.Println("Receive message:", recvStr)
   conn.Write([]byte(recvStr)) //发送数据
  }
 }
 
 func main() {
- listen, err := net.Listen("tcp", "127.0.0.1:8888")
+ // listen on all interfaces
+ ln, err := net.Listen("tcp", "127.0.0.1:8080")
  if err != nil {
+  // handle error
   fmt.Println("Listen failed error message:", err)
   return
  }
  for {
-  conn, err := listen.Accept() //建立连接
+  // close the listener when the application closes
+  conn, err := ln.Accept()
   if err != nil {
+   // handle error
    fmt.Println("Establishing connection failed, error message:", err)
    continue
   }
-  go process(conn) //启动一个goroutine处理连接
+  go handleConnection(conn)
  }
 }
+
 ```
 
 ## 运行结果
