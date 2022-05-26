@@ -9,65 +9,70 @@ import (
 )
 
 const (
-	CONN_PORT = ":3333"
+	CONN_PORT = ":8080"
 	CONN_TYPE = "tcp"
 
-	MSG_DISCONNECT = "Disconnected from the server.\n"
+	MSG_DISCONN = "Connection closed.\n"
 )
 
-var wg sync.WaitGroup
+var waitGroup sync.WaitGroup
 
-// Reads from the socket and outputs to the console.
+
 func Read(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	for {
 		str, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Printf(MSG_DISCONNECT)
-			wg.Done()
+			fmt.Printf(MSG_DISCONN)
+			waitGroup.Done()
 			return
 		}
 		fmt.Print(str)
 	}
 }
 
-// Reads from Stdin, and outputs to the socket.
+
 func Write(conn net.Conn) {
+	// read from stdin
 	reader := bufio.NewReader(os.Stdin)
+	// write to connection
 	writer := bufio.NewWriter(conn)
 
 	for {
 		str, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println(err)
+			waitGroup.Done()
 			os.Exit(1)
 		}
-
 		_, err = writer.WriteString(str)
 		if err != nil {
 			fmt.Println(err)
+			waitGroup.Done()
 			os.Exit(1)
 		}
 		err = writer.Flush()
 		if err != nil {
 			fmt.Println(err)
+			waitGroup.Done()
 			os.Exit(1)
 		}
 	}
 }
 
-// Starts up a read and write thread which connect to the server through the
-// a socket connection.
-func main() {
-	wg.Add(1)
 
+func main() {
+	// goroutine
+	waitGroup.Add(1)
+
+	// connect to the socket
 	conn, err := net.Dial(CONN_TYPE, CONN_PORT)
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	
 	go Read(conn)
 	go Write(conn)
 
-	wg.Wait()
+	waitGroup.Wait()
 }

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CONN_PORT = ":3333"
+	CONN_PORT = ":8080"
 	CONN_TYPE = "tcp"
 
 	MAX_CLIENTS = 10
@@ -40,7 +40,7 @@ const (
 	NOTICE_ROOM_NAME       = NOTICE_PREFIX + "\"%s\" changed their name to \"%s\".\n"
 	NOTICE_ROOM_DELETE     = NOTICE_PREFIX + "Chat room is inactive and being deleted.\n"
 	NOTICE_PERSONAL_CREATE = NOTICE_PREFIX + "Created chat room \"%s\".\n"
-	NOTICE_PERSONAL_NAME   = NOTICE_PREFIX + "Changed name to \"\".\n"
+	NOTICE_PERSONAL_NAME   = NOTICE_PREFIX + "Changed name to \"%s\".\n"
 
 	MSG_CONNECT = "Welcome to the server! Type \"/help\" to get a list of commands.\n"
 	MSG_FULL    = "Server is full. Please try reconnecting later."
